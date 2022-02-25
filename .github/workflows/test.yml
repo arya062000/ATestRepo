@@ -1,0 +1,21 @@
+steps:
+    - uses: actions/checkout@v2
+    - name: Make Release Package
+      run: |
+        zip -r transitional-coach.zip .
+      
+    - name: Install ORAS
+      run: |
+        curl -LO https://github.com/deislabs/oras/releases/download/v0.9.0/oras_0.9.0_linux_amd64.tar.gz
+        mkdir -p oras-install/
+        tar -zxf oras_0.9.0_*.tar.gz -C oras-install/
+        sudo mv oras-install/oras /usr/local/bin/
+        rm -rf oras_0.9.0_*.tar.gz oras-install/
+     - name: ORAS Login
+      run: echo ${{ github.token }} | oras login https://ghcr.io -u ${{ github.actor }} --password-stdin
+
+    - name: Publish Package
+      run: |
+        oras push ghcr.io/${{ github.repository }}/transitional-coach:$GITHUB_RUN_NUMBER \
+          --manifest-config /dev/null:application/vnd.unknown.config.v1+json \
+          ./transitional-coach.zip
